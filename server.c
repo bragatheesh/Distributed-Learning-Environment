@@ -11,9 +11,12 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#include "server.h"
+
 #define BUFFSIZE 1024
 #define MAX_THREADS 50
 
+struct student x;
 
 void
 term(int signum)

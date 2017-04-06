@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -63,7 +64,8 @@ int init_connection_to_server(char* hostname, char* port){
 
 int main(int argc, char** argv){
     char userName[256];
-    char password[256];
+    //char password[256];
+    char* password;
     char buffer[BUFFSIZE];
     char* token;
     int ret;
@@ -83,12 +85,13 @@ int main(int argc, char** argv){
     while (1){
 
         memset(userName, '\0', 256);
-        memset(password, '\0', 256);
+        //memset(password, '\0', 256);
         memset(buffer, '\0', BUFFSIZE);
         printf("Welcome to the School Portal\nUsername: ");
         scanf("%s", userName);
-        printf("Password: ");
-        scanf("%s", password);
+        //printf("Password: ");
+        //scanf("%s", password);
+        password = getpass("Password: ");
 
         //send username and password to server and wait for authorization
         //confirmation and authorization type
@@ -110,7 +113,7 @@ int main(int argc, char** argv){
         }
         token = strtok(buffer, ",");
         if (!strcmp(token, "AUTHORIZED")){
-            printf("Welcome %s %s\n", userName, password);
+            printf("Welcome %s\n", userName);
             token = strtok(NULL, ",");
             if (!strcmp(token, "ADMIN")){
                 //pass information to GUI
