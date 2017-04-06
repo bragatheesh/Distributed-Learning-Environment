@@ -37,12 +37,12 @@ int init_connection_to_server(char* hostname, char* port){
         return -1;
     }
 
-    timeout.tv_sec = 2;
+    /*timeout.tv_sec = 2;
     timeout.tv_usec = 0;
 
     if (setsockopt (server_sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0){
         printf("setsockopt(SO_RCVTIMEO) failed\n");
-    }
+    }*/
 
     sockaddr_size = sizeof(server);
     //zero out the sockaddr_in struct in preparation of storing connection info
@@ -114,12 +114,15 @@ int main(int argc, char** argv){
             token = strtok(NULL, ",");
             if (!strcmp(token, "ADMIN")){
                 //pass information to GUI
+                printf("%s is a Admin\n", userName);
             }
             else if (!strcmp(token, "INSTR")){
                 //pass info to GUI
+                printf("%s is a Instructor\n", userName);
             }
             else if (!strcmp(token, "STUDENT")){
                 //pass info to GUI
+                printf("%s is a Student\n", userName);
             }
         }
         else{
