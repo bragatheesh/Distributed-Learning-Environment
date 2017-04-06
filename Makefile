@@ -5,4 +5,4 @@ run:
 	./login_shell
 
 clean:
-	rm -rf login_shell
+	rm -rf login_shell login_shell.dSYM
