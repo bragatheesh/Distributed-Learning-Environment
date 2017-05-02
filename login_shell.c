@@ -128,6 +128,9 @@ int main(int argc, char** argv){
                 printf("%s is a Student\n", userName);
             }
         }
+        else if(!strcmp(token, "NOTAUTHORIZED")){
+            printf("Invalid username or password\n");
+        }
         else{
             printf("Unrecognized username and password\n");
         }

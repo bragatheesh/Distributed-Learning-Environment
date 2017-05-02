@@ -170,7 +170,17 @@ student_handler(int client_sock, struct student* myStud){
 			printf("Recvfrom failed in student_handler\n");
 			close(client_sock);
 			return;
-		}
+	}
+	
+	if(!strcmp("VA", client_message)){
+		printf("Client sent VA\n");
+	}
+	if(!strcmp("VG", client_message)){
+		printf("Client sent VG\n");
+	}
+	if(!strcmp("ER", client_message)){
+		printf("Client sent ER\n");
+	}
 	
 }
 

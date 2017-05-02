@@ -69,6 +69,7 @@ instructor_handler(){
 void
 student_handler(){
     int choice;
+    std::string message;
     std::cout << "Welcome Student" << std::endl;
     std::cout << "Options\n1.\tView Assignments\n2.\tView Grades\n3.\tExit" << std::endl; 
     
@@ -76,12 +77,30 @@ student_handler(){
     switch (choice){
         case 1:
             std::cout << "View Assignments" << std::endl;
+            message = "VA";
+            if (send(server_sock, message.c_str(), strlen(message.c_str()), 0) < 0){
+                printf("Could not Authorize\n");
+                close(server_sock);
+                return;
+            }
             break;
         case 2:
             std::cout << "View Grades" << std::endl;
+            message = "VG";
+            if (send(server_sock, message.c_str(), strlen(message.c_str()), 0) < 0){
+                printf("Could not Authorize\n");
+                close(server_sock);
+                return;
+            }
             break;
         case 3:
             std::cout << "Exit" << std::endl;
+            message = "EX";
+            if (send(server_sock, message.c_str(), strlen(message.c_str()), 0) < 0){
+                printf("Could not Authorize\n");
+                close(server_sock);
+                return;
+            }
             close(server_sock);
             exit(1);
             break;
