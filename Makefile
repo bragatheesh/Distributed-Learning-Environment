@@ -1,4 +1,4 @@
-all:
+all: clean
 	gtags
 	#gcc -g login_shell.c -o login_shell
 	#gcc -g -pthread server.c -o server

@@ -18,6 +18,7 @@
 #define BUFFSIZE 1024
 #define MAX_THREADS 50
 
+void test_program();
 
 struct student* students = NULL;
 struct course* courses = NULL;
@@ -102,7 +103,9 @@ init_course(int id, std::string name, struct instructor &inst){
 	myCourse->name = name;
 	myCourse->id = id;
 	myCourse->course_instructor = inst;
+	
 	HASH_ADD_INT(courses, id, myCourse);
+	HASH_ADD_INT(inst.courses, id, myCourse);
 	return myCourse;
 }
 
@@ -180,6 +183,7 @@ student_handler(int client_sock, struct student* myStud){
 	}
 	if(!strcmp("ER", client_message)){
 		printf("Client sent ER\n");
+		test_program();
 	}
 	
 }
@@ -259,6 +263,33 @@ client_handler(void* server_s)
 	}
 }
 
+void
+test_program(){
+	struct instructor* inst;
+	struct student* c;
+	struct course* course;
+
+	std::cout << "number of students: " << HASH_COUNT(students) << std::endl;
+	std::cout << "number of instructors: " << HASH_COUNT(instructors) << std::endl;
+	std::cout << "number of courses: " << HASH_COUNT(courses) << std::endl;
+
+    printf("\nprinting students:\n");
+	for(c = students; c != NULL; c = (struct student*) c->hh.next){
+		std::cout << "ID: " << c->id << " Name: " << c->name << std::endl;
+	}
+
+    printf("printing instructors:\n");
+	for(inst = instructors; inst != NULL; inst = (struct instructor* )inst->hh.next){
+		std::cout << "ID: " << inst->id << " Name: " << inst->name << " Courses:" << std::endl;
+		for(course = inst->courses; course != NULL; course = (struct course* ) course->hh.next){
+			std::cout << "ID: " << course->id << " Name: " << course->name << " Taught by: " << course->course_instructor.name <<std::endl;
+		}
+	}
+    printf("printing courses:\n");
+	for(course = courses; course != NULL; course = (struct course* ) course->hh.next){
+		std::cout << "ID: " << course->id << " Name: " << course->name << " Taught by: " << course->course_instructor.name <<std::endl;
+	}
+}
 
 
 	int 
@@ -269,8 +300,6 @@ main(int argc, char *argv[])
 	int sockaddr_size;
 	int server_sock;
 	int client_sock;
-	pid_t pid;
-	pthread_t thread_ids[MAX_THREADS];
 	struct sockaddr_in server, client;
 	struct sigaction action;
 
@@ -280,11 +309,30 @@ main(int argc, char *argv[])
 	}
 
 	admin1 = init_admin(0, "brag", "root");
-    init_student(0, "brag", "bragpassword");
+	//test_program();
+    
 	init_student(1, "akshay", "ak");
+	init_student(0, "brag", "bragpassword");
+	init_student(2, "kriti", "kriti");
+	init_student(3, "yash", "bash");
 	struct instructor* inst = init_instructor(0, "rod", "207");
 	init_course(207, "Networking Apps", *inst);
 	int result = add_student_to_course("brag", "bragpassword", 207);
+	if(result == 0){
+		printf("error addint student to course\n");
+		return -1;
+	}
+	result = add_student_to_course("yash", "bash", 207);
+	if(result == 0){
+		printf("error addint student to course\n");
+		return -1;
+	}
+	result = add_student_to_course("kriti", "kriti", 207);
+	if(result == 0){
+		printf("error addint student to course\n");
+		return -1;
+	}
+	result = add_student_to_course("akshay", "ak", 207);
 	if(result == 0){
 		printf("error addint student to course\n");
 		return -1;
