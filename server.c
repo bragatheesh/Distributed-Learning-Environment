@@ -29,9 +29,10 @@ term(int signum){
 	printf("\nCaught SIGINT\n");
     if(admin1 != NULL)
 	    free(admin1);
-	HASH_CLEAR(hh, students);
-	HASH_CLEAR(hh, courses);
-	HASH_CLEAR(hh, instructors);
+
+	//HASH_CLEAR(hh, courses);
+	//HASH_CLEAR(hh, instructors);
+	//HASH_CLEAR(hh, students);
 	exit(1);
 }
 
@@ -75,7 +76,7 @@ init_student(int id, char* name, char* password){
 	myStud->password = password;
 	myStud->uniq = uniq;
 	myStud->id = id;
-	HASH_ADD_KEYPTR(hh, students, myStud->uniq, strlen(myStud->uniq), myStud);
+	HASH_ADD_KEYPTR(hh, students, uniq, strlen(uniq), myStud);
 	return myStud;
 }
 
@@ -103,7 +104,7 @@ init_instructor(int id, char* name, char* password){
 }
 
 struct course* 
-init_course(int id, char* name, struct instructor inst){
+init_course(int id, char* name, struct instructor *inst){
 	struct course* myCourse;
 	HASH_FIND_INT(courses, &id, myCourse);
 	if (myCourse != NULL) {
@@ -115,10 +116,10 @@ init_course(int id, char* name, struct instructor inst){
 	memset(myCourse->name, '\0', strlen(name));
 	myCourse->name = name;
 	myCourse->id = id;
-	myCourse->course_instructor = inst;
+	myCourse->course_instructor = *inst;
 	
 	HASH_ADD_INT(courses, id, myCourse);
-	HASH_ADD_INT(inst.courses, id, myCourse);
+	HASH_ADD_INT(inst->instructor_courses, id, myCourse);
 	return myCourse;
 }
 
@@ -161,6 +162,32 @@ find_instructor(char* name, char* password){
 }
 
 int
+add_assignment_to_course(int id, char* assignment_name, int value){
+	struct course* myCourse = find_course(id);
+	if(myCourse == NULL){
+		printf("Error no such course\n");
+		return -1;
+	}
+
+	struct assignment* myAssignment;
+	HASH_FIND_STR(myCourse->course_assignments, assignment_name, myAssignment);  //Check if command is already present in hash
+	if (myAssignment != NULL) {
+		printf("Assignment already exists");
+		return -2;
+	}
+
+	myAssignment = malloc(sizeof(struct assignment*));
+	myAssignment->name = malloc(strlen(assignment_name));
+	memset(myAssignment, '\0', strlen(assignment_name));
+	myAssignment->name = assignment_name;
+	myAssignment->value = value;
+
+	HASH_ADD_KEYPTR(hh, myCourse->course_assignments, myAssignment->name, strlen(myAssignment->name), myAssignment);
+	return 1;
+
+}
+
+int
 add_student_to_course(char* studName, char* studPass, int courseID){
 	struct student* myStud = find_student(studName, studPass);
 	if(myStud == NULL){
@@ -175,6 +202,32 @@ add_student_to_course(char* studName, char* studPass, int courseID){
 	}
 
 	HASH_ADD_KEYPTR(hh, myCourse->course_students, myStud->uniq, strlen(myStud->uniq), myStud);
+	HASH_ADD_INT(myStud->student_courses, id, myCourse);
+	return 1;
+}
+
+int
+grade_student(char* studName, char* studPass, int courseID, char* assignmentName, int grade){
+	struct student* myStud = find_student(studName, studPass);
+	if(myStud == NULL){
+		printf("Error student %s %s does not exist\n", studName, studPass);
+		return -1;
+	}
+
+	struct course* myCourse;
+	HASH_FIND_INT(courses, &courseID, myCourse);  //Check if command is already present in hash
+	if (myCourse == NULL) {
+		//printf("Student does not exist\n");
+		return -1;
+	}
+	struct assignment* myAssignment;
+	HASH_FIND_PTR(myStud->student_courses->course_assignments, assignmentName, myAssignment);  //Check if command is already present in hash
+	if (myAssignment == NULL) {
+		//printf("Student does not exist\n");
+		return -1;
+	}
+
+	myAssignment->grade = grade;
 	return 1;
 }
 
@@ -191,9 +244,25 @@ student_handler(int client_sock, struct student* myStud){
 	
 	if(!strcmp("VA", client_message)){
 		printf("Client sent VA\n");
+		struct assignment* ass, *tmpass;
+		struct course* myCourse, *tmpcourse;
+		HASH_ITER(hh, myStud->student_courses, myCourse, tmpcourse){
+			printf("\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+			HASH_ITER(hh, myCourse->course_assignments, ass, tmpass){
+				printf("\t\t\tName: %s Value: %d\n",ass->name, ass->value);
+			}
+		}
 	}
 	if(!strcmp("VG", client_message)){
 		printf("Client sent VG\n");
+		struct assignment* ass, *tmpass;
+		struct course* myCourse, *tmpcourse;
+		HASH_ITER(hh, myStud->student_courses, myCourse, tmpcourse){
+			printf("\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+			HASH_ITER(hh, myCourse->course_assignments, ass, tmpass){
+				printf("\t\t\tName: %s Value: %d Grade: %d\n",ass->name, ass->value, ass->grade);
+			}
+		}
 	}
 	if(!strcmp("ER", client_message)){
 		printf("Client sent ER\n");
@@ -281,7 +350,8 @@ void
 test_program(){
 	struct instructor* inst;
 	struct student* c, *tmp;
-	struct course* course;
+	struct course* myCourse;
+	struct assignment* ass, *tmpass;
 
 	printf("number of students: %d\n", HASH_COUNT(students));
 	printf("number of instructors: %d\n", HASH_COUNT(instructors));
@@ -299,15 +369,18 @@ test_program(){
 	for(inst = instructors; inst != NULL; inst = (struct instructor* )inst->hh.next){
 		if(inst->id % 2 != 0){
 			printf("Student ");
+			printf("ID: %d Name: %s\n",inst->id, inst->name);
 		}
-		printf("ID: %d Name: %s Courses:\n",inst->id, inst->name);
-		for(course = inst->courses; course != NULL; course = (struct course* ) course->hh.next){
-			printf("ID: %d Name: %s \n", course->id, course->name);
+		else{
+			printf("ID: %d Name: %s\n",inst->id, inst->name);
+			for(myCourse = inst->instructor_courses; myCourse != NULL; myCourse = (struct course* ) myCourse->hh.next){
+				printf("\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+				printf("\t\tAssignments: ");
+				HASH_ITER(hh, myCourse->course_assignments, ass, tmpass){
+					printf("\t\t\tName: %s Value: %d\n",ass->name, ass->value);
+				}
+			}
 		}
-	}
-    printf("printing courses:\n");
-	for(course = courses; course != NULL; course = (struct course* ) course->hh.next){
-		printf("ID: %d Name: %s \n", course->id, course->name);
 	}
 }
 
@@ -340,7 +413,7 @@ main(int argc, char *argv[])
 	init_instructor(3, "kriti", "kriti");
 	init_instructor(5, "yash", "bash");
 	struct instructor* inst = init_instructor(4, "rod", "207");
-	init_course(207, "Networking Apps", *inst);
+	init_course(207, "Networking Apps", inst);
 	int result = add_student_to_course("brag", "bragpassword", 207);
 	if(result == 0){
 		printf("error addint student to course\n");
@@ -359,6 +432,28 @@ main(int argc, char *argv[])
 	result = add_student_to_course("akshay", "ak", 207);
 	if(result == 0){
 		printf("error addint student to course\n");
+		return -1;
+	}
+
+	result = add_assignment_to_course(207, "Lab1", 100);
+	if(result != 1){
+		printf("error adding lab1 to 207\n");
+		return -1;
+	}
+
+	result = grade_student("yash", "bash", 207, "Lab1", 95);
+	if(result != 1){
+		printf("error grading lab1\n");
+		return -1;
+	}
+	result = grade_student("kriti", "kriti", 207, "Lab1", 100);
+	if(result != 1){
+		printf("error grading lab1\n");
+		return -1;
+	}
+	result = grade_student("brag", "bragpassword", 207, "Lab1", 20);
+	if(result != 1){
+		printf("error grading lab1\n");
 		return -1;
 	}
 

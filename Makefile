@@ -21,4 +21,5 @@ crun_server:
 	./c_server 8080
 
 clean:
-	rm -rf login_shell login_shell.dSYM server server.dSYM GPATH GRTAGS GTAGS 
+	rm -rf login_shell login_shell.dSYM server server.dSYM GPATH GRTAGS GTAGS GSYMS
+	rm -rf c_server c_login_shell 
