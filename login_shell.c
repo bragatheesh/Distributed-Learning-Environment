@@ -10,6 +10,7 @@
 #include <netdb.h>
 #include <fcntl.h>
 
+
 #define BUFFSIZE 1024
 
 int server_sock;
@@ -38,13 +39,6 @@ int init_connection_to_server(char* hostname, char* port){
         return -1;
     }
 
-    /*timeout.tv_sec = 2;
-    timeout.tv_usec = 0;
-
-    if (setsockopt (server_sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout)) < 0){
-        printf("setsockopt(SO_RCVTIMEO) failed\n");
-    }*/
-
     sockaddr_size = sizeof(server);
     //zero out the sockaddr_in struct in preparation of storing connection info
     bzero(&server, sockaddr_size);
@@ -62,9 +56,65 @@ int init_connection_to_server(char* hostname, char* port){
     return 1;
 }
 
-int main(int argc, char** argv){
+void
+admin_handler(){
+    
+}
+
+void
+instructor_handler(){
+
+}
+
+void
+student_handler(){
+    int choice;
+    //std::string message;
+    char message[BUFFSIZE];
+    memset(&message, 0, BUFFSIZE);
+    printf("Welcome Student\n");
+    printf("Options\n1.\tView Assignments\n2.\tView Grades\n3.\tExit\n"); 
+    
+    scanf("%d", &choice);
+    switch (choice){
+        case 1:
+            printf("View Assignments\n");
+            sprintf(message, "%s", "VA");
+            if (send(server_sock, message, strlen(message), 0) < 0){
+                printf("Could not Authorize\n");
+                close(server_sock);
+                return;
+            }
+            break;
+        case 2:
+            printf("View Grades\n");
+            sprintf(message, "%s", "VG");
+            if (send(server_sock, message, strlen(message), 0) < 0){
+                printf("Could not Authorize\n");
+                close(server_sock);
+                return;
+            }
+            break;
+        case 3:
+            printf("Exit\n");
+            sprintf(message, "%s", "ER");
+            if (send(server_sock, message, strlen(message), 0) < 0){
+                printf("Could not Authorize\n");
+                close(server_sock);
+                return;
+            }
+            close(server_sock);
+            exit(1);
+            break;
+        default:
+            printf("duh");
+            break;
+    }
+}
+
+int 
+main(int argc, char** argv){
     char userName[256];
-    //char password[256];
     char* password;
     char buffer[BUFFSIZE];
     char* token;
@@ -85,12 +135,9 @@ int main(int argc, char** argv){
     while (1){
 
         memset(userName, '\0', 256);
-        //memset(password, '\0', 256);
         memset(buffer, '\0', BUFFSIZE);
         printf("Welcome to the School Portal\nUsername: ");
         scanf("%s", userName);
-        //printf("Password: ");
-        //scanf("%s", password);
         password = getpass("Password: ");
 
         //send username and password to server and wait for authorization
@@ -117,19 +164,24 @@ int main(int argc, char** argv){
             token = strtok(NULL, ",");
             if (!strcmp(token, "ADMIN")){
                 //pass information to GUI
-                printf("%s is a Admin\n", userName);
+                //printf("%s is a Admin\n", userName);
+                admin_handler();
             }
             else if (!strcmp(token, "INSTR")){
                 //pass info to GUI
-                printf("%s is a Instructor\n", userName);
+                //printf("%s is a Instructor\n", userName);
+                instructor_handler();
             }
             else if (!strcmp(token, "STUDENT")){
                 //pass info to GUI
-                printf("%s is a Student\n", userName);
+                //printf("%s is a Student\n", userName);
+                student_handler();
             }
         }
         else if(!strcmp(token, "NOTAUTHORIZED")){
             printf("Invalid username or password\n");
+            close(server_sock);
+            exit(1);
         }
         else{
             printf("Unrecognized username and password\n");

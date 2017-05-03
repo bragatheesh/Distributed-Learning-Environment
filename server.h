@@ -8,7 +8,7 @@ struct student{
     std::string name;
     std::string password;
     std::string uniq;
-    struct course* courses;
+    struct course* courses = NULL;
     UT_hash_handle hh;
 };
 
@@ -17,16 +17,16 @@ struct instructor{
     std::string name;
     std::string password;
     std::string uniq;
-    struct course* courses;
+    struct course* courses = NULL;
     UT_hash_handle hh;
 };
 
 struct course{
     int id;
     std::string name;
-    struct student* students;
+    struct student* students = NULL;
     struct instructor course_instructor;
-    struct assignment* assignments;
+    struct assignment* assignments = NULL;
     UT_hash_handle hh;
 };
 
