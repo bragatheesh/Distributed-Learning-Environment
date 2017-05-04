@@ -215,20 +215,19 @@ grade_student(char* studName, char* studPass, int courseID, char* assignmentName
 	}
 
 	struct course* myCourse;
-	HASH_FIND_INT(courses, &courseID, myCourse);  //Check if command is already present in hash
+	HASH_FIND_INT(myStud->student_courses, &courseID, myCourse);  //Check if command is already present in hash
 	if (myCourse == NULL) {
 		//printf("Student does not exist\n");
 		return -1;
 	}
-	struct assignment* myAssignment;
-	HASH_FIND_PTR(myStud->student_courses->course_assignments, assignmentName, myAssignment);  //Check if command is already present in hash
-	if (myAssignment == NULL) {
-		//printf("Student does not exist\n");
-		return -1;
+	struct assignment* ass, *tmpass;
+	HASH_ITER(hh, myCourse->course_assignments, ass, tmpass){
+		if(!strcmp(ass->name, assignmentName)){
+			ass->grade = grade;
+			return 1;
+		}
 	}
-
-	myAssignment->grade = grade;
-	return 1;
+	return -1;
 }
 
 void
@@ -438,6 +437,18 @@ main(int argc, char *argv[])
 	result = add_assignment_to_course(207, "Lab1", 100);
 	if(result != 1){
 		printf("error adding lab1 to 207\n");
+		return -1;
+	}
+
+	result = add_assignment_to_course(207, "Lab2", 50);
+	if(result != 1){
+		printf("error adding lab2 to 207\n");
+		return -1;
+	}
+
+	result = add_assignment_to_course(207, "Lab3", 100);
+	if(result != 1){
+		printf("error adding lab3 to 207\n");
 		return -1;
 	}
 
