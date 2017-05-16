@@ -8,6 +8,7 @@ struct student{
     char* password;
     char* uniq;
     struct course* student_courses;
+    struct assignment* student_assignments;
     UT_hash_handle hh;
 };
 
