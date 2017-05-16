@@ -69,6 +69,7 @@ instructor_handler(){
 void
 student_handler(){
     int choice;
+    int ret;
     //std::string message;
     char message[BUFFSIZE];
     memset(&message, 0, BUFFSIZE);
@@ -81,11 +82,21 @@ student_handler(){
             printf("View Assignments\n");
             sprintf(message, "%s", "VA");
             if (send(server_sock, message, strlen(message), 0) < 0){
+                printf("Could not send VA\n");
+                close(server_sock);
+                return;
+            }
+            
+            memset(&message, '\0', BUFFSIZE);
+            ret = recv(server_sock, message, BUFFSIZE, 0);
+            if (ret < 0){
                 printf("Could not Authorize\n");
                 close(server_sock);
                 return;
             }
+            printf("response: %s\n", message);
             break;
+
         case 2:
             printf("View Grades\n");
             sprintf(message, "%s", "VG");
@@ -94,7 +105,17 @@ student_handler(){
                 close(server_sock);
                 return;
             }
+
+            memset(&message, '\0', BUFFSIZE);
+            ret = recv(server_sock, message, BUFFSIZE, 0);
+            if (ret < 0){
+                printf("Could not Authorize\n");
+                close(server_sock);
+                return;
+            }
+            printf("response: %s\n", message);
             break;
+            
         case 3:
             printf("Exit\n");
             sprintf(message, "%s", "ER");

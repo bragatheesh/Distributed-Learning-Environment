@@ -232,7 +232,7 @@ grade_student(char* studName, char* studPass, int courseID, char* assignmentName
 
 void
 student_handler(int client_sock, struct student* myStud){
-   printf("ID: %d  Name: %s\n", myStud->id, myStud->name);
+	printf("ID: %d  Name: %s\n", myStud->id, myStud->name);
 	char client_message[BUFFSIZE];
 	bzero(client_message, BUFFSIZE);
 	if (recv(client_sock, client_message, BUFFSIZE, 0) < 0){
@@ -245,20 +245,59 @@ student_handler(int client_sock, struct student* myStud){
 		printf("Client sent VA\n");
 		struct assignment* ass, *tmpass;
 		struct course* myCourse, *tmpcourse;
+		char buffer[4096];
+		int ret;
+
+		memset(buffer, '\0', 4096);
 		HASH_ITER(hh, myStud->student_courses, myCourse, tmpcourse){
 			printf("\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+			sprintf(buffer, "\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+			ret = send(client_sock, buffer, strlen(buffer), 0);
+			if (ret < 0){
+				printf("Sending message failed\n");
+				pthread_exit(NULL);
+			}
+			memset(buffer, '\0', 4096);
 			HASH_ITER(hh, myCourse->course_assignments, ass, tmpass){
 				printf("\t\t\tName: %s Value: %d\n",ass->name, ass->value);
+				sprintf(buffer, "\t\t\tName: %s Value: %d\n",ass->name, ass->value);
+				ret = send(client_sock, buffer, strlen(buffer), 0);
+				
+				if (ret < 0){
+					printf("Sending message failed\n");
+					pthread_exit(NULL);
+				}
+				memset(buffer, '\0', 4096);
 			}
 		}
+		//printf("buffer: %s\n", buffer);
 	}
 	if(!strcmp("VG", client_message)){
 		printf("Client sent VG\n");
 		struct assignment* ass, *tmpass;
 		struct course* myCourse, *tmpcourse;
+		char buffer[4096];
+		int ret;
+
 		HASH_ITER(hh, myStud->student_courses, myCourse, tmpcourse){
+			memset(buffer, '\0', 4096);
+			sprintf(buffer, "\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
 			printf("\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+			
+			ret = send(client_sock, buffer, strlen(buffer), 0);
+			if (ret < 0){
+			    printf("Sending message failed\n");
+			    pthread_exit(NULL);
+			}
 			HASH_ITER(hh, myCourse->course_assignments, ass, tmpass){
+				memset(buffer, '\0', 4096);
+				sprintf(buffer, "\t\t\tName: %s Value: %d Grade: %d\n",ass->name, ass->value, ass->grade);
+							
+				ret = send(client_sock, buffer, strlen(buffer), 0);
+				if (ret < 0){
+			   		printf("Sending message failed\n");
+			    	pthread_exit(NULL);
+				}
 				printf("\t\t\tName: %s Value: %d Grade: %d\n",ass->name, ass->value, ass->grade);
 			}
 		}
@@ -270,15 +309,68 @@ student_handler(int client_sock, struct student* myStud){
 	
 }
 
-/*void
-instructor_handler(int client_sock, struct instructor* myInst){
-    std::cout << "ID: " << myInst->id << " Name: " << myInst->name << std::endl;
+void
+instructor_handler(int client_sock, struct instructor* myInst)
+{
+	printf("Welcome instructor %s\n", myInst->name);
+	while (1){
+	    printf("ID: %d  Name: %s\n", myInst->id, myInst->name);
+	    char client_message[BUFFSIZE];
+	    bzero(client_message, BUFFSIZE);
+	    if (recv(client_sock, client_message, BUFFSIZE, 0) < 0){
+			printf("Recvfrom failed in instructor_handler\n");
+			close(client_sock);
+			return;
+	    }
+
+		if(!strcmp("VA", client_message)){
+			struct assignment* ass, *tmpass;
+			struct course* myCourse, *tmpcourse;
+			char buffer[4096];
+			int ret;
+			
+			HASH_ITER(hh, myInst->instructor_courses, myCourse, tmpcourse){
+			printf("\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+			sprintf(buffer, "\tCourse ID: %d Name: %s \n", myCourse->id, myCourse->name);
+			ret = send(client_sock, buffer, strlen(buffer), 0);
+			if (ret < 0){
+				printf("Sending message failed\n");
+				pthread_exit(NULL);
+			}
+			memset(buffer, '\0', 4096);
+			HASH_ITER(hh, myCourse->course_assignments, ass, tmpass){
+				printf("\t\t\tName: %s Value: %d\n",ass->name, ass->value);
+				sprintf(buffer, "\t\t\tName: %s Value: %d\n",ass->name, ass->value);
+				ret = send(client_sock, buffer, strlen(buffer), 0);
+				if (ret < 0){
+					printf("Sending message failed\n");
+					pthread_exit(NULL);
+				}
+				memset(buffer, '\0', 4096);
+			}
+		}
+		}
+		else if(!strcmp("AA", client_message)){
+			
+		}
+		else if(!strcmp("VG", client_message)){
+			
+		}	
+		else if(!strcmp("AA", client_message)){
+			
+		}
+		else{
+			//error here
+		}
+
+	}
+    
 }
 
 void
 admin_handler(int client_sock){
-    std::cout << "ID: " << admin1->id << " Name: " << admin1->name << std::endl;
-}*/
+    printf("Welcome admin\n");
+}
 
 void* 
 client_handler(void* server_s)
